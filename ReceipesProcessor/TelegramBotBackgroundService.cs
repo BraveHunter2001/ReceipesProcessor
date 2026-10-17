@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ReceipesProcessor.Service;
@@ -35,6 +36,7 @@ internal class TelegramBotBackgroundService(
         using var scope = scopeFactory.CreateScope();
         TextExctractor exctractor = scope.ServiceProvider.GetRequiredService<TextExctractor>();
         ReceiptTextService receiptService = scope.ServiceProvider.GetRequiredService<ReceiptTextService>();
+        S3StorageProvider storageProvider = scope.ServiceProvider.GetRequiredService<S3StorageProvider>();
 
         if (update.Message is not { Photo: { } photos } message)
             return;
@@ -47,10 +49,15 @@ internal class TelegramBotBackgroundService(
             text: $"Вы загрузили фото: {photo.FileId}",
             cancellationToken: cancellationToken
         );
-
         MemoryStream imageStream = new MemoryStream();
         await botClient.DownloadFile(imageInfo.FilePath!, imageStream, cancellationToken);
-        string raw = exctractor.Exctract(imageStream);
+        string uploadedImageName = await storageProvider.UploadFileAsync(imageStream, $"{imageInfo.FileId}.png", "image/jpeg");
+
+
+        (var stream,var ct) = await storageProvider.GetFileAsync(uploadedImageName);
+        MemoryStream ms = new();
+        await stream.CopyToAsync(ms);
+        string raw = exctractor.Exctract(ms);
 
         var receipt = await receiptService.Process(raw);
         var print = FormatReceiptMessage(receipt);
