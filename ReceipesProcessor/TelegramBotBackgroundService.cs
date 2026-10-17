@@ -17,21 +17,15 @@ internal class TelegramBotBackgroundService(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var receiverOptions = new ReceiverOptions
-        {
-            AllowedUpdates = Array.Empty<UpdateType>() // Получать все обновления
-        };
-
+        ReceiverOptions receiverOptions = new ReceiverOptions() { AllowedUpdates = [] };
         logger.LogInformation("Telegram bot start as background service..");
 
-        // Запуск получения обновлений
         client.StartReceiving(
             updateHandler: HandleUpdateAsync,
             errorHandler: HandlePollingErrorAsync,
             receiverOptions: receiverOptions,
             cancellationToken: stoppingToken
         );
-
 
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
@@ -40,15 +34,14 @@ internal class TelegramBotBackgroundService(
     {
         using var scope = scopeFactory.CreateScope();
         TextExctractor exctractor = scope.ServiceProvider.GetRequiredService<TextExctractor>();
-        ReceiptService receiptService = scope.ServiceProvider.GetRequiredService<ReceiptService>();
+        ReceiptTextService receiptService = scope.ServiceProvider.GetRequiredService<ReceiptTextService>();
 
-        // Работаем только с текстовыми сообщениями
         if (update.Message is not { Photo: { } photos } message)
             return;
 
         var photo = photos.MaxBy(p => p.FileSize);
         var chatId = message.Chat.Id;
-        var imageInfo = await botClient.GetFile(photo.FileId);
+        var imageInfo = await botClient.GetFile(photo!.FileId);
         Message sentMessage = await botClient.SendMessage(
             chatId: chatId,
             text: $"Вы загрузили фото: {photo.FileId}",
@@ -84,7 +77,7 @@ internal class TelegramBotBackgroundService(
     }
 
 
-    static string FormatReceiptMessage(Receipt receipt)
+    static string FormatReceiptMessage(ReceiptDto receipt)
     {
         if (receipt == null) return "Чек пуст";
 

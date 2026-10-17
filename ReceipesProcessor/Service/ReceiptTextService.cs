@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace ReceipesProcessor.Service;
 
-internal class ReceiptService
+internal class ReceiptTextService
 {
     const string JsonPromt = $@"Ты — умный парсер чеков. Твоя задача — проанализировать сырой текст распознанного чека и извлечь из него структуру. Текст чека может быть некрасивым или спутанным.
 Ты должен вернуть ТОЛЬКО чистый JSON объект, без разметки ```json, без вступлений и объяснений.
@@ -23,7 +23,7 @@ internal class ReceiptService
 }}
 ";
 
-    public async Task<Receipt> Process(string ocrText)
+    public async Task<ReceiptDto> Process(string ocrText)
     {
         using var httpClient = new HttpClient();
         httpClient.Timeout = TimeSpan.FromSeconds(120);
@@ -47,6 +47,6 @@ internal class ReceiptService
         string llmJsonOutput = doc.RootElement.GetProperty("response").GetString()?.Trim() ?? string.Empty;
 
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        return JsonSerializer.Deserialize<Receipt>(llmJsonOutput, options) ?? throw new Exception("Error create recipt");
+        return JsonSerializer.Deserialize<ReceiptDto>(llmJsonOutput, options) ?? throw new Exception("Error create recipt");
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
-// Структура JSON объектов
-public class ReceiptItem
+
+public class ReceiptItemDto
 {
     [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
     [JsonPropertyName("quantity")] public double Quantity { get; set; }
