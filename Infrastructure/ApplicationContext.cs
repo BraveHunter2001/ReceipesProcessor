@@ -31,6 +31,10 @@ public class ApplicationContext(DbContextOptions<ApplicationContext> opt) : DbCo
         {
             e.HasKey(e => e.Id);
             e.Property(e => e.Id).ValueGeneratedOnAdd();
+
+            e.HasOne(e => e.Receipt)
+            .WithMany()
+            .HasForeignKey(e => e.ReceiptId);
         });
 
         base.OnModelCreating(builder);

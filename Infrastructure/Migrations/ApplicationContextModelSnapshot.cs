@@ -37,6 +37,10 @@ namespace Infrastructure.Migrations
                     b.Property<string>("ImageId")
                         .HasColumnType("text");
 
+                    b.Property<string>("OwnerKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("RawText")
                         .HasColumnType("text");
 
@@ -63,10 +67,15 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("AtRecord")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("ReceiptId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ReceiptId");
 
                     b.ToTable("ReceiptHistories");
                 });
@@ -100,6 +109,17 @@ namespace Infrastructure.Migrations
                     b.HasIndex("ReceiptId");
 
                     b.ToTable("ReceiptItems");
+                });
+
+            modelBuilder.Entity("ReceiptHistory", b =>
+                {
+                    b.HasOne("Receipt", "Receipt")
+                        .WithMany()
+                        .HasForeignKey("ReceiptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Receipt");
                 });
 
             modelBuilder.Entity("ReceiptItem", b =>

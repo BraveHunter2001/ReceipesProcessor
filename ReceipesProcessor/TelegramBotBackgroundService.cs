@@ -2,16 +2,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ReceipesProcessor.Service;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 
 internal class TelegramBotBackgroundService(
-    ITelegramBotClient client, 
+    ITelegramBotClient client,
     IServiceScopeFactory scopeFactory,
     ILogger<TelegramBotBackgroundService> logger
 ) : BackgroundService
@@ -34,12 +32,18 @@ internal class TelegramBotBackgroundService(
     async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         using var scope = scopeFactory.CreateScope();
-        TextExctractor exctractor = scope.ServiceProvider.GetRequiredService<TextExctractor>();
-        ReceiptTextService receiptService = scope.ServiceProvider.GetRequiredService<ReceiptTextService>();
         S3StorageProvider storageProvider = scope.ServiceProvider.GetRequiredService<S3StorageProvider>();
+        ApplicationContext applicationContext = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
 
         if (update.Message is not { Photo: { } photos } message)
+        {
+            await botClient.SendMessage(
+                chatId: update.Message!.Chat.Id,
+                text: $"Загрузите фото...",
+                cancellationToken: cancellationToken
+            );
             return;
+        }
 
         var photo = photos.MaxBy(p => p.FileSize);
         var chatId = message.Chat.Id;
@@ -51,21 +55,26 @@ internal class TelegramBotBackgroundService(
         );
         MemoryStream imageStream = new MemoryStream();
         await botClient.DownloadFile(imageInfo.FilePath!, imageStream, cancellationToken);
+
+
         string uploadedImageName = await storageProvider.UploadFileAsync(imageStream, $"{imageInfo.FileId}.png", "image/jpeg");
 
+        Receipt receipt = new Receipt()
+        {
+            OwnerKey = chatId.ToString(),
+            Status = ReceiptStatus.Created,
+            ImageId = uploadedImageName
+        };
 
-        (var stream,var ct) = await storageProvider.GetFileAsync(uploadedImageName);
-        MemoryStream ms = new();
-        await stream.CopyToAsync(ms);
-        string raw = exctractor.Exctract(ms);
+        ReceiptHistory receiptHistory = new() { Receipt = receipt, Status = ReceiptStatus.Created, AtRecord = DateTime.UtcNow };
 
-        var receipt = await receiptService.Process(raw);
-        var print = FormatReceiptMessage(receipt);
+        await applicationContext.Receipts.AddAsync(receipt);
+        await applicationContext.ReceiptHistories.AddAsync(receiptHistory);
+        await applicationContext.SaveChangesAsync();
 
-        Message sentMessage2 = await botClient.SendMessage(
+        await botClient.SendMessage(
           chatId: chatId,
-          text: print,
-          parseMode: ParseMode.Html,
+          text: $"Чек создан #{receipt.Id}!",
           cancellationToken: cancellationToken
       );
     }
@@ -118,4 +127,4 @@ internal class TelegramBotBackgroundService(
         return sb.ToString();
     }
 }
- 
+

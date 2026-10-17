@@ -8,12 +8,13 @@
     public ReceiptStatus Status { get; set; }
     public string? RawText { get; set; }
     public string? ImageId { get; set; }
+
+    public required string OwnerKey { get; set; }
 }
 
 public enum ReceiptStatus
 {
     Created,
-    ImageLoaded,
     TextExctracted,
     Finished
 }
