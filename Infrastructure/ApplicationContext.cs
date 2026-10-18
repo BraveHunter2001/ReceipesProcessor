@@ -17,7 +17,7 @@ public class ApplicationContext(DbContextOptions<ApplicationContext> opt) : DbCo
             e.Property(e => e.Status).HasConversion<string>();
 
             e.HasMany(e => e.Items)
-            .WithOne()
+            .WithOne(e => e.Receipt)
             .HasForeignKey(e => e.ReceiptId);
         });
 

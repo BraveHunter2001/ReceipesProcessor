@@ -1,4 +1,5 @@
 ﻿using Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -37,6 +38,26 @@ internal class TelegramBotBackgroundService(
 
         if (update.Message is not { Photo: { } photos } message)
         {
+            if (update.Message.Text is "/receipts")
+            {
+                var receipts = await applicationContext.Receipts
+                    .Include(r => r.Items)
+                    .Where(r=>r.Status == ReceiptStatus.Finished)
+                    .ToListAsync();
+                foreach (var outReceipt in receipts)
+                {
+                    await botClient.SendMessage(
+                                   chatId: update.Message!.Chat.Id,
+                                   text: FormatReceiptMessage(outReceipt),
+                                   parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                                   cancellationToken: cancellationToken
+                               );
+                }
+
+                return;
+            }
+
+
             await botClient.SendMessage(
                 chatId: update.Message!.Chat.Id,
                 text: $"Загрузите фото...",
@@ -93,19 +114,19 @@ internal class TelegramBotBackgroundService(
     }
 
 
-    static string FormatReceiptMessage(ReceiptDto receipt)
+    static string FormatReceiptMessage(Receipt receipt)
     {
         if (receipt == null) return "Чек пуст";
 
         var sb = new StringBuilder();
 
         // Заголовок
-        sb.AppendLine("<b>🧾 Ваш чек</b>");
+        sb.AppendLine($"<b>🧾 Ваш чек #{receipt.Id}</b>");
         sb.AppendLine("──────────────────────────");
 
-        if (receipt.Items != null && receipt.Items.Length > 0)
+        if (receipt.Items != null && receipt.Items.Count > 0)
         {
-            for (int i = 0; i < receipt.Items.Length; i++)
+            for (int i = 0; i < receipt.Items.Count; i++)
             {
                 var item = receipt.Items[i];
 

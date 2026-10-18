@@ -2,6 +2,7 @@
   <Folder Name="/Solution Items/">
     <File Path="docker-compose.yml" />
   </Folder>
+  <Project Path="Application/Application.csproj" Id="155d1991-f9cc-484d-a2e0-c913d05ee104" />
   <Project Path="Domain/Domain.csproj" Id="78ef2e5a-fb37-4dcc-a6e9-36f1a498e10e" />
   <Project Path="Infrastructure/Infrastructure.csproj" Id="102b35d8-c84c-4376-8af9-9e823cf43c05" />
   <Project Path="ReceipesProcessor/ReceipesProcessor.csproj" />

@@ -1,14 +1,13 @@
 ﻿using Tesseract;
 
-namespace ReceipesProcessor.Service;
+namespace Application.Service;
 
-internal class TextExctractor : IDisposable
+public class TextExctractor : IDisposable
 {
-    string tessdataPath = "./tessdata";
     TesseractEngine engine;
-    public TextExctractor()
+    public TextExctractor(string path)
     {
-        engine = new TesseractEngine(tessdataPath, "rus+eng", EngineMode.Default);
+        engine = new TesseractEngine(path, "rus+eng", EngineMode.Default);
     }
 
     public void Dispose()

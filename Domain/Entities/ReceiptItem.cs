@@ -8,4 +8,5 @@
     public decimal Sum { get; set; }
 
     public int ReceiptId { get; set; }
+    public Receipt? Receipt { get; set; }
 }

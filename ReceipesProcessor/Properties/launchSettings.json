@@ -2,6 +2,7 @@
   "profiles": {
     "ReceipesProcessor": {
       "commandName": "Project",
+      "applicationUrl": "http://localhost:5001;https://localhost:7001",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }

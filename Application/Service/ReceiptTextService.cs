@@ -1,9 +1,9 @@
 ﻿using System.Text;
 using System.Text.Json;
 
-namespace ReceipesProcessor.Service;
+namespace Application.Service;
 
-internal class ReceiptTextService
+public class ReceiptTextService
 {
     const string JsonPromt = $@"Ты — умный парсер чеков. Твоя задача — проанализировать сырой текст распознанного чека и извлечь из него структуру. Текст чека может быть некрасивым или спутанным.
 Ты должен вернуть ТОЛЬКО чистый JSON объект, без разметки ```json, без вступлений и объяснений.
