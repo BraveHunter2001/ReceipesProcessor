@@ -1,6 +1,10 @@
 ﻿using Application.DI;
+using Infrastructure;
 using Infrastructure.DI;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ReceipesProcessor.BackgroundServices;
+using ReceipesProcessor.Response;
 using Serilog;
 using Telegram.Bot;
 
@@ -39,10 +43,16 @@ try
 
     app.UseStaticFiles();
     app.MapFallbackToFile("index.html");
-    app.MapGet("/api/test", () => "Hi world from beck");
+    app.MapGet("/api/receipts", async ([FromServices] ApplicationContext context) =>
+    {
+        var receipts = await context.Receipts.Include(r=>r.Items).OrderByDescending(r => r.Id).ToListAsync();
+        var reseponse = receipts.ConvertAll(r => new ReceiptsListItem(r));
+        return Results.Ok(reseponse);
+    });
 
     await app.RunAsync();
-} catch (Exception ex)
+}
+catch (Exception ex)
 {
     Log.Logger.Fatal(ex.ToString());
 }
