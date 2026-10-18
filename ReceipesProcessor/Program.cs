@@ -37,7 +37,9 @@ try
     var app = builder.Build();
     app.UseHttpsRedirection();
 
-
+    app.UseStaticFiles();
+    app.MapFallbackToFile("index.html");
+    app.MapGet("/api/test", () => "Hi world from beck");
 
     await app.RunAsync();
 } catch (Exception ex)

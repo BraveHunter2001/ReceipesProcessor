@@ -31,4 +31,33 @@
     </None>
   </ItemGroup>
 
+	<PropertyGroup>
+		<!-- Указываем бэкенду, где искать скомпилированный фронтенд (Vite по умолчанию собирает в dist) -->
+		<SpaRoot>ClientApp\</SpaRoot>
+		<DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
+	</PropertyGroup>
+
+	<Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
+		<!-- Проверка, что Node.js установлен (только для сборки) -->
+		<Exec Command="node --version" ContinueOnError="true">
+			<Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+		</Exec>
+		<Error Condition="'$(ErrorCode)' != '0'" Text="Node.js ис required to build this project." />
+	</Target>
+
+	<!-- Автоматическая сборка фронтенда при публикации (Publish) бэкенда -->
+	<Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
+		<Exec ConsoleToMSBuild="true" Command="npm install" WorkingDirectory="$(SpaRoot)" />
+		<Exec ConsoleToMSBuild="true" Command="npm run build" WorkingDirectory="$(SpaRoot)" />
+
+		<ItemGroup>
+			<DistFiles Include="$(SpaRoot)dist\**" />
+			<ResolvedFileToPublish Include="@(DistFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+				<RelativePath>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+				<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+				<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			</ResolvedFileToPublish>
+		</ItemGroup>
+	</Target>
+
 </Project>
