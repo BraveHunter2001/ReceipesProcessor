@@ -37,7 +37,7 @@
 
 	<PropertyGroup>
 		<!-- Указываем бэкенду, где искать скомпилированный фронтенд (Vite по умолчанию собирает в dist) -->
-		<SpaRoot>ClientApp\</SpaRoot>
+		<SpaRoot>..\webclient\</SpaRoot>
 		<DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
 	</PropertyGroup>
 

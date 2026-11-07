@@ -1,4 +1,4 @@
-import { Col, Divider, Layout, Row, Table, Tag, Typography, type TableColumnsType } from "antd";
+import { Button, Col, Divider, Layout, message, Row, Table, Tag, Typography, Upload, type TableColumnsType } from "antd";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
@@ -78,26 +78,58 @@ const expandedRowRender = (r: Receipt) => <Table<ReceiptItem> size="small" colum
 
 function App() {
     const [receipts, setReceipts] = useState<Receipt[]>([]);
+    const [messageApi, contextHolder] = message.useMessage();
+
+    const fetchReceipts = async () => {
+        const response = await axios.get("/api/receipts");
+        setReceipts(response.data);
+    };
+
     useEffect(() => {
         // Используем async/await внутри useEffect через самовызывающуюся функцию
         const fetchData = async () => {
             try {
-                const response = await axios.get("api/receipts");
-                setReceipts(response.data); // Сохраняем данные в state
-            } catch (err) {
-            } finally {
+                await fetchReceipts();
+            } catch {
+                messageApi.error("Не удалось загрузить список чеков");
             }
         };
 
         fetchData();
     }, []);
 
+    const uploadReceipt = async (file: File) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        try {
+            await axios.post("/api/receipts/upload", formData);
+            messageApi.success("Чек загружен и отправлен на обработку");
+            await fetchReceipts();
+        } catch {
+            messageApi.error("Не удалось загрузить чек");
+        }
+    };
+
     return (
         <Layout>
+            {contextHolder}
             <Row gutter={[8, 8]} style={{ margin: 5 }}>
                 <Col span={24}>
                     <Typography.Title style={{ textAlign: "center" }}>Receipts</Typography.Title>
                     <Divider />
+                </Col>
+                <Col span={24}>
+                    <Upload
+                        accept="image/*"
+                        maxCount={1}
+                        showUploadList={false}
+                        beforeUpload={(file) => {
+                            void uploadReceipt(file);
+                            return false;
+                        }}
+                    >
+                        <Button>Загрузить чек</Button>
+                    </Upload>
                 </Col>
                 <Col span={24}>
                     <Table<Receipt>

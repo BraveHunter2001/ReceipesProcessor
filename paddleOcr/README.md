@@ -42,3 +42,28 @@ py -3.10 -m venv .venv
 curl http://localhost:8000/health
 curl -F "file=@receipt.png;type=image/png" http://localhost:8000/ocr/receipt
 ```
+
+## Запуск через Docker Compose
+
+Требования: Linux/WSL2 или Docker Desktop с NVIDIA Container Toolkit, установленный
+NVIDIA-драйвер и доступный GPU. Сервис намеренно работает только через GPU — без
+CPU fallback.
+
+Из корня репозитория:
+
+```bash
+docker compose build paddleocr
+docker compose up -d paddleocr
+docker compose logs -f paddleocr
+```
+
+После загрузки модели проверка готовности и запрос OCR доступны на `localhost:8000`:
+
+```bash
+curl http://localhost:8000/ready
+curl -F "file=@receipt.png;type=image/png" http://localhost:8000/ocr/receipt
+```
+
+Модели сохраняются в Docker volume `receipesprocessor_paddleocr_cache`. Если GPU,
+CUDA или NVIDIA Container Toolkit недоступны, контейнер не становится ready и не
+переключается на CPU.

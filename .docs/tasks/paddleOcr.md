@@ -42,3 +42,6 @@
 - Установлены `nvidia-cudnn-cu11==8.9.4.25`, `nvidia-cublas-cu11==11.11.3.6` и `nvidia-cuda-nvrtc-cu11==11.8.89` в `paddleOcr/venv`.
 - DLL-пути подключены в `main.py` автоматически перед импортом PaddlePaddle.
 - Реальная проверка на `photo_2026-11-07_11-14-51.jpg` успешно выполнена на GPU: PaddleOCR вернул текстовые блоки, confidence и координаты.
+
+- Добавлен `paddleOcr/Dockerfile` на базе NVIDIA CUDA 11.8/cuDNN 8 и отдельный `requirements.docker.txt`.
+- В `docker-compose.yml` добавлен GPU-сервис `paddleocr` с публикацией `localhost:8000`, health-check и volume для кэша моделей.

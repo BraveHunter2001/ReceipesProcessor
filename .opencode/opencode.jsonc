@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Модель не задана намеренно: все агенты используют модель текущей сессии.
+  "default_agent": "build",
+
+  // Общие правила проекта загружаются всеми агентами.
+  "instructions": [
+    ".docs/AGENT_RULES.md"
+  ],
+
+  "experimental": {
+    "todo": true,
+    "subagent_depth": 1
+  }
+}

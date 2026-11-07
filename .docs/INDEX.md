@@ -7,6 +7,7 @@
 | Analysis ID | Анализ | Analysis status | Task ID | Задача | Task status | Owner | Updated |
 |---|---|---|---|---|---|---|---|
 | `AN-001` | [PaddleOCR](analitycs/paddleOcr.md) | `approved` | `TASK-001` | [Реализация PaddleOCR](tasks/paddleOcr.md) | `done` | — | 2026-11-07 |
+| `AN-002` | [Загрузка чеков через сайт](analitycs/receipt-upload-web.md) | `implemented` | `TASK-002` | [Веб-загрузка вместо Telegram](tasks/receipt-upload-web.md) | `done` | — | 2026-11-07 |
 
 ## Правила реестра
 
