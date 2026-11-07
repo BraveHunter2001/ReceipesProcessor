@@ -1,6 +1,10 @@
-fastapi
-uvicorn
-python-multipart
---find-links https://paddlepaddle.org.cn
-paddlepaddle-gpu
-paddleocr
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+Pillow==11.1.0
+numpy==1.26.4
+paddlepaddle-gpu==2.6.2
+paddleocr==2.10.0
+nvidia-cudnn-cu11==8.9.4.25
+nvidia-cublas-cu11==11.11.3.6
+nvidia-cuda-nvrtc-cu11==11.8.89
