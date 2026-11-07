@@ -15,7 +15,7 @@ py -3.10 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Зафиксированная матрица: `paddlepaddle-gpu==2.6.2.post120`, `paddleocr==2.10.0`, Python 3.10.
+Зафиксированная матрица: `paddlepaddle-gpu==2.6.2`, `paddleocr==2.10.0`, Python 3.10.
 Для другой версии CUDA необходимо подобрать соответствующий официальный wheel PaddlePaddle GPU,
 а не добавлять CPU-пакет `paddlepaddle`.
 

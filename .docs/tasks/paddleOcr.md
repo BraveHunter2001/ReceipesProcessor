@@ -12,4 +12,12 @@
 
 ## Проверка
 
-Локальная среда содержит `paddle 2.6.2` с CUDA, но установленный `paddleocr 3.7.0` несовместим с ним и падает при инициализации (`AnalysisConfig.set_optimization_level`). Полный inference до переустановки зависимостей не выполнялся. Проверены версии Python и наличие одного CUDA GPU. Контрактные проверки endpoint выполняются с mock OCR после подмены lifespan-инициализации.
+Локальная среда содержала `paddleocr 3.7.0`, несовместимый с `paddle 2.6.2`, и падала при инициализации (`AnalysisConfig.set_optimization_level`). После переустановки установлены совместимые версии `paddleocr 2.10.0` и `paddlepaddle-gpu 2.6.2`. Контрактные проверки endpoint выполняются с mock OCR после подмены lifespan-инициализации.
+
+## Установка окружения
+
+- Установлены зависимости из `paddleOcr/requirements.txt`.
+- Исправлена недоступная в PyPI строка `paddlepaddle-gpu==2.6.2.post120` на доступную `paddlepaddle-gpu==2.6.2`.
+- Проверено: `paddle==2.6.2`, CUDA-сборка — `True`, GPU — `1` (`NVIDIA GeForce GTX 1660 Ti`).
+- Проверено: `paddleocr==2.10.0`, `fastapi==0.115.6`.
+- `pip check` завершился без конфликтов зависимостей.
