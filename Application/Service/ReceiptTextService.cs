@@ -8,10 +8,12 @@ namespace Application.Service;
 public class ReceiptTextService
 {
     private readonly OllamaSettings ollamaSettings;
+    private readonly IHttpClientFactory httpClientFactory;
 
-    public ReceiptTextService(IOptions<OllamaSettings> ollamaOptions)
+    public ReceiptTextService(IOptions<OllamaSettings> ollamaOptions, IHttpClientFactory httpClientFactory)
     {
         ollamaSettings = ollamaOptions.Value;
+        this.httpClientFactory = httpClientFactory;
     }
 
     const string JsonPromt = $@"Ты — умный парсер чеков. Твоя задача — проанализировать сырой текст распознанного чека и извлечь из него структуру. Текст чека может быть некрасивым или спутанным.
@@ -34,12 +36,12 @@ public class ReceiptTextService
 
     public async Task<ReceiptDto> Process(string ocrText)
     {
-        using var httpClient = new HttpClient();
-        httpClient.Timeout = TimeSpan.FromSeconds(120);
+        using var httpClient = httpClientFactory.CreateClient("Ollama");
+        httpClient.Timeout = ollamaSettings.Timeout;
 
         var requestBody = new
         {
-            model = "qwen2.5:3b",
+            model = ollamaSettings.Model,
             prompt = $"{JsonPromt}. Текст чека для парсинга: {ocrText}",
             stream = false,
             options = new { temperature = 0.0 },

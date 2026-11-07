@@ -4,6 +4,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Infrastructure.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Infrastructure;
 
@@ -11,11 +13,12 @@ public class PaddleOcrClient
 {
     private readonly HttpClient _httpClient;
     // Адрес вашего Python-сервиса (порт 8000 по умолчанию для FastAPI/Uvicorn)
-    private const string OcrUrl = "http://localhost:8000/ocr/receipt";
+    private readonly PaddleOcrSettings _settings;
 
-    public PaddleOcrClient()
+    public PaddleOcrClient(HttpClient httpClient, IOptions<PaddleOcrSettings> options)
     {
-        _httpClient = new HttpClient();
+        _httpClient = httpClient;
+        _settings = options.Value;
     }
 
     /// <summary>
@@ -37,7 +40,8 @@ public class PaddleOcrClient
         content.Add(streamContent, "file", fileName);
 
         // Выполняем асинхронный POST-запрос к микросервису
-        HttpResponseMessage response = await _httpClient.PostAsync(OcrUrl, content);
+        string baseUrl = _settings.BaseUrl.TrimEnd('/');
+        HttpResponseMessage response = await _httpClient.PostAsync($"{baseUrl}/ocr/receipt", content);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -73,18 +77,18 @@ public class OcrResponse
     public bool Success { get; set; }
 
     [JsonPropertyName("lines")]
-    public List<OcrLine> Lines { get; set; }
+    public List<OcrLine>? Lines { get; set; }
 }
 
 public class OcrLine
 {
     [JsonPropertyName("text")]
-    public string Text { get; set; }
+    public string Text { get; set; } = string.Empty;
 
     [JsonPropertyName("confidence")]
     public double Confidence { get; set; }
 
     // Координаты рамки текста на изображении: [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
     [JsonPropertyName("box")]
-    public List<List<double>> Box { get; set; }
+    public List<List<double>> Box { get; set; } = [];
 }

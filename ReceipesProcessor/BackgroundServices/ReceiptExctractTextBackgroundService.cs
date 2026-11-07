@@ -1,15 +1,19 @@
 ﻿using Application.Service;
 using Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Application.Configuration;
 
 namespace ReceipesProcessor.BackgroundServices;
 
 internal class ReceiptExctractTextBackgroundService(
     ILogger<ReceiptExctractTextBackgroundService> logger,
-    IServiceScopeFactory scopeFactory
+    IServiceScopeFactory scopeFactory,
+    IOptions<ReceiptProcessingSettings> options
 ) : BackgroundService
 {
-    private readonly PeriodicTimer _timer = new(TimeSpan.FromSeconds(1));
+    private readonly PeriodicTimer _timer = new(options.Value.PollingInterval);
+    private readonly int batchSize = options.Value.BatchSize;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -36,7 +40,7 @@ internal class ReceiptExctractTextBackgroundService(
 
         List<Receipt> receipts = await applicationContext.Receipts.Where(r => r.Status == ReceiptStatus.Created)
              .OrderBy(r=>r.Id)
-             .Take(50)
+             .Take(batchSize)
              .ToListAsync(stoppingToken);
         if (receipts.Count == 0) return;
 

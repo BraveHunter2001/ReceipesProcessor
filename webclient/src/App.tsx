@@ -1,6 +1,7 @@
 import {
     Button,
     Col,
+    Collapse,
     Descriptions,
     Divider,
     Image,
@@ -58,6 +59,14 @@ interface ReceiptDetails extends Receipt {
     history: ReceiptHistoryItem[];
 }
 
+interface ReceiptsResponse {
+    items: Receipt[];
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+}
+
 const statusTag = (status: ReceiptStatus) => {
     const tag = receiptStatusTag[status] ?? { title: "Неизвестен", color: "default" };
     return <Tag color={tag.color}>{tag.title}</Tag>;
@@ -75,14 +84,38 @@ const columns: TableColumnsType<Receipt> = [
 
 function App() {
     const [receipts, setReceipts] = useState<Receipt[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalCount, setTotalCount] = useState(0);
+    const [isReceiptsLoading, setIsReceiptsLoading] = useState(false);
     const [selectedReceipt, setSelectedReceipt] = useState<ReceiptDetails | null>(null);
     const [isDetailsLoading, setIsDetailsLoading] = useState(false);
     const [messageApi, contextHolder] = message.useMessage();
 
-    const fetchReceipts = useCallback(async () => {
-        const response = await axios.get<Receipt[]>("/api/receipts");
-        setReceipts(response.data);
-    }, []);
+    const fetchReceipts = useCallback(async (page = currentPage, requestedPageSize = pageSize) => {
+        setIsReceiptsLoading(true);
+        try {
+            let response = await axios.get<ReceiptsResponse>("/api/receipts", {
+                params: { page, pageSize: requestedPageSize },
+            });
+            let { data } = response;
+            const lastPage = Math.max(data.totalPages, 1);
+
+            if (page > lastPage) {
+                response = await axios.get<ReceiptsResponse>("/api/receipts", {
+                    params: { page: lastPage, pageSize: requestedPageSize },
+                });
+                data = response.data;
+            }
+
+            setReceipts(data.items);
+            setCurrentPage(data.page);
+            setPageSize(data.pageSize);
+            setTotalCount(data.totalCount);
+        } finally {
+            setIsReceiptsLoading(false);
+        }
+    }, [currentPage, pageSize]);
 
     useEffect(() => {
         const load = async () => {
@@ -151,7 +184,22 @@ function App() {
                         rowKey="id"
                         dataSource={receipts}
                         columns={columns}
-                        loading={isDetailsLoading}
+                        loading={isReceiptsLoading || isDetailsLoading}
+                        pagination={{
+                            current: currentPage,
+                            pageSize,
+                            total: totalCount,
+                            showSizeChanger: true,
+                            pageSizeOptions: ["10", "20", "50"],
+                            showTotal: (total, range) => `${range[0]}–${range[1]} из ${total}`,
+                        }}
+                        onChange={(pagination) => {
+                            const nextPage = pagination.current ?? 1;
+                            const nextSize = pagination.pageSize ?? pageSize;
+                            const pageChanged = nextSize !== pageSize ? 1 : nextPage;
+                            setCurrentPage(pageChanged);
+                            setPageSize(nextSize);
+                        }}
                         onRow={(receipt) => ({
                             onClick: () => void openReceipt(receipt),
                             style: { cursor: "pointer" },
@@ -165,58 +213,78 @@ function App() {
                 open={selectedReceipt !== null}
                 onCancel={() => setSelectedReceipt(null)}
                 footer={null}
-                width={900}
+                width={1000}
             >
                 {selectedReceipt && (
-                    <Space direction="vertical" size="large" style={{ width: "100%" }}>
-                        <Descriptions bordered column={{ xs: 1, sm: 2 }}>
-                            <Descriptions.Item label="Статус">{statusTag(selectedReceipt.status)}</Descriptions.Item>
-                            <Descriptions.Item label="Итого">
-                                {selectedReceipt.totalSum ?? "—"} {selectedReceipt.currency}
-                            </Descriptions.Item>
-                        </Descriptions>
+                    <Row gutter={[24, 16]}>
+                        <Col xs={24} md={8}>
+                            <Image
+                                width="100%"
+                                src={`/api/receipts/${selectedReceipt.id}/image`}
+                                alt={`Изображение чека №${selectedReceipt.id}`}
+                                style={{ maxHeight: 600, objectFit: "contain" }}
+                            />
+                        </Col>
+                        <Col xs={24} md={16}>
+                            <Space direction="vertical" size="large" style={{ width: "100%" }}>
+                                <Descriptions bordered column={{ xs: 1, sm: 2 }}>
+                                    <Descriptions.Item label="Статус">{statusTag(selectedReceipt.status)}</Descriptions.Item>
+                                    <Descriptions.Item label="Итого">
+                                        {selectedReceipt.totalSum ?? "—"} {selectedReceipt.currency}
+                                    </Descriptions.Item>
+                                </Descriptions>
 
-                        <Image
-                            src={`/api/receipts/${selectedReceipt.id}/image`}
-                            alt={`Изображение чека №${selectedReceipt.id}`}
-                            style={{ maxHeight: 400, maxWidth: "100%", objectFit: "contain" }}
-                        />
+                                <div>
+                                    <Typography.Title level={5}>Позиции</Typography.Title>
+                                    <Table<ReceiptItem>
+                                        size="small"
+                                        pagination={false}
+                                        scroll={{ x: "max-content" }}
+                                        rowKey="id"
+                                        dataSource={selectedReceipt.items}
+                                        columns={[
+                                            { title: "Товар", dataIndex: "name", key: "name" },
+                                            { title: "Количество", dataIndex: "quantity", key: "quantity" },
+                                            { title: "Цена", dataIndex: "price", key: "price" },
+                                            { title: "Сумма", dataIndex: "sum", key: "sum" },
+                                        ]}
+                                    />
+                                </div>
 
-                        <Typography.Title level={5}>Позиции</Typography.Title>
-                        <Table<ReceiptItem>
-                            size="small"
-                            pagination={false}
-                            rowKey="id"
-                            dataSource={selectedReceipt.items}
-                            columns={[
-                                { title: "Товар", dataIndex: "name", key: "name" },
-                                { title: "Количество", dataIndex: "quantity", key: "quantity" },
-                                { title: "Цена", dataIndex: "price", key: "price" },
-                                { title: "Сумма", dataIndex: "sum", key: "sum" },
-                            ]}
-                        />
+                                <Collapse
+                                    items={[{
+                                        key: "raw-text",
+                                        label: "Сырой текст OCR",
+                                        children: (
+                                            <Typography.Paragraph copyable={{ text: selectedReceipt.rawText ?? "" }} style={{ marginBottom: 0 }}>
+                                                <pre style={{ whiteSpace: "pre-wrap", margin: 0 }}>
+                                                    {selectedReceipt.rawText || "Текст ещё не извлечён"}
+                                                </pre>
+                                            </Typography.Paragraph>
+                                        ),
+                                    }]}
+                                />
 
-                        <Typography.Title level={5}>Сырой текст OCR</Typography.Title>
-                        <Typography.Paragraph copyable={{ text: selectedReceipt.rawText ?? "" }}>
-                            <pre style={{ whiteSpace: "pre-wrap", margin: 0 }}>{selectedReceipt.rawText || "Текст ещё не извлечён"}</pre>
-                        </Typography.Paragraph>
-
-                        <Typography.Title level={5}>История статусов</Typography.Title>
-                        <List
-                            size="small"
-                            bordered
-                            dataSource={selectedReceipt.history}
-                            locale={{ emptyText: "История отсутствует" }}
-                            renderItem={(item) => (
-                                <List.Item>
-                                    <span>{statusTag(item.status)}</span>
-                                    <Typography.Text type="secondary">
-                                        {new Date(item.atRecord).toLocaleString("ru-RU")}
-                                    </Typography.Text>
-                                </List.Item>
-                            )}
-                        />
-                    </Space>
+                                <div>
+                                    <Typography.Title level={5}>История статусов</Typography.Title>
+                                    <List
+                                        size="small"
+                                        bordered
+                                        dataSource={selectedReceipt.history}
+                                        locale={{ emptyText: "История отсутствует" }}
+                                        renderItem={(item) => (
+                                            <List.Item>
+                                                <span>{statusTag(item.status)}</span>
+                                                <Typography.Text type="secondary">
+                                                    {new Date(item.atRecord).toLocaleString("ru-RU")}
+                                                </Typography.Text>
+                                            </List.Item>
+                                        )}
+                                    />
+                                </div>
+                            </Space>
+                        </Col>
+                    </Row>
                 )}
             </Modal>
         </Layout>

@@ -8,10 +8,10 @@ public class TextExctractor : IDisposable
 {
     TesseractEngine engine;
     PaddleOcrClient paddleOcrClient;
-    public TextExctractor(string path)
+    public TextExctractor(string path, PaddleOcrClient paddleOcrClient)
     {
         engine = new TesseractEngine(path, "rus+eng", EngineMode.Default);
-        paddleOcrClient = new();
+        this.paddleOcrClient = paddleOcrClient;
     }
 
     public void Dispose()

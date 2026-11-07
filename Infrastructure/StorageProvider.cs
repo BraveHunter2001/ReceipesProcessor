@@ -1,7 +1,8 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
-using Microsoft.Extensions.Configuration;
+using Infrastructure.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Infrastructure;
 
@@ -10,18 +11,18 @@ public class S3StorageProvider
     private readonly IAmazonS3 _s3Client;
     private readonly string _bucketName;
 
-    public S3StorageProvider(IConfiguration configuration)
+    public S3StorageProvider(IOptions<S3Settings> options)
     {
-        var s3Settings = configuration.GetSection("S3Settings");
+        var s3Settings = options.Value;
 
         var config = new AmazonS3Config
         {
-            ServiceURL = s3Settings["ServiceUrl"],
+            ServiceURL = s3Settings.ServiceUrl,
             ForcePathStyle = true // Обязательно для MinIO/локального тестирования
         };
 
-        _s3Client = new AmazonS3Client(s3Settings["AccessKey"], s3Settings["SecretKey"], config);
-        _bucketName = s3Settings["BucketName"] ?? throw new ArgumentNullException("Configs.S3Settings.BucketName");
+        _s3Client = new AmazonS3Client(s3Settings.AccessKey, s3Settings.SecretKey, config);
+        _bucketName = s3Settings.BucketName ?? throw new ArgumentNullException("Configs.S3Settings.BucketName");
     }
 
     public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string contentType)

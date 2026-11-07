@@ -7,33 +7,31 @@ using ReceipesProcessor.BackgroundServices;
 using Serilog;
 using Telegram.Bot;
 
-var configuration = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .Build();
-
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(configuration)
-    .CreateLogger();
 try
 {
+    var builder = WebApplication.CreateBuilder(args);
+    Log.Logger = new LoggerConfiguration()
+        .ReadFrom.Configuration(builder.Configuration)
+        .CreateLogger();
     Log.Logger.Information("Start hosting app");
 
-    var builder = WebApplication.CreateBuilder(args);
-
-    bool telegramBotEnabled = builder.Configuration.GetValue("TelegramBot:Enabled", false);
+    var telegramSettings = builder.Configuration.GetSection("TelegramBot").Get<ReceipesProcessor.Configuration.TelegramBotSettings>() ?? new();
+    telegramSettings.Token ??= builder.Configuration["botToken"];
     string dbConnection = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("ConnectionStrings.DefaultConnection");
     string tessdataFolderName = builder.Configuration.GetSection("TesseractSettings:FolderName").Value ?? "tessdata";
     string absoluteTessdataPath = Path.Combine(AppContext.BaseDirectory, tessdataFolderName);
 
-    builder.Services.AddInfrastructure(dbConnection);
+    builder.Services.AddInfrastructure(dbConnection, builder.Configuration);
     builder.Services.AddApplication(absoluteTessdataPath, builder.Configuration);
     builder.Services.AddSerilog((services, loggerConfiguration) => loggerConfiguration
         .ReadFrom.Configuration(builder.Configuration)
         .ReadFrom.Services(services));
-    if (telegramBotEnabled)
+    if (telegramSettings.Enabled)
     {
-        string token = builder.Configuration.GetRequiredSection("botToken").Value!;
-        builder.Services.AddSingleton<ITelegramBotClient>(provider => new TelegramBotClient(token));
+        if (string.IsNullOrWhiteSpace(telegramSettings.Token))
+            throw new InvalidOperationException("TelegramBot:Token (or legacy botToken) is required when TelegramBot:Enabled=true.");
+        string token = telegramSettings.Token;
+        builder.Services.AddSingleton<ITelegramBotClient>(_ => new TelegramBotClient(token));
         builder.Services.AddHostedService<TelegramBotBackgroundService>();
     }
     builder.Services.AddHostedService<ReceiptExctractTextBackgroundService>();
@@ -44,10 +42,21 @@ try
 
     app.UseStaticFiles();
     app.MapFallbackToFile("index.html");
-    app.MapGet("/api/receipts", async ([FromServices] ReceiptService service) =>
+    app.MapGet("/api/receipts", async (
+        int? page,
+        int? pageSize,
+        [FromServices] ReceiptService service,
+        CancellationToken cancellationToken) =>
     {
-        var reseponse = await service.GetList();
-        return Results.Ok(reseponse);
+        var requestedPage = page ?? 1;
+        var requestedPageSize = pageSize ?? 10;
+        if (requestedPage < 1 || requestedPageSize < 1 || requestedPageSize > 50)
+        {
+            return Results.BadRequest(new { error = "page должен быть не меньше 1, а pageSize — от 1 до 50." });
+        }
+
+        var response = await service.GetListAsync(requestedPage, requestedPageSize, cancellationToken);
+        return Results.Ok(response);
     });
     app.MapGet("/api/receipts/{id:int}", async (
         int id,

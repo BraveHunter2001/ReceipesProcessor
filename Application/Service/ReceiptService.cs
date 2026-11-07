@@ -41,10 +41,32 @@ public class ReceiptService(ApplicationContext context, S3StorageProvider storag
         return new ReceiptsListItem(receipt);
     }
 
-    public async Task<List<ReceiptsListItem>> GetList()
+    public async Task<PagedReceiptsResponse> GetListAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken)
     {
-        var receipts = await context.Receipts.Include(r => r.Items).OrderByDescending(r => r.Id).ToListAsync();
-        return receipts.ConvertAll(r => new ReceiptsListItem(r));
+        var query = context.Receipts
+            .Include(r => r.Items)
+            .OrderByDescending(r => r.Id);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var skip = (long)(page - 1) * pageSize;
+        var receipts = await query
+            .Skip(skip > int.MaxValue ? int.MaxValue : (int)skip)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        var totalPages = totalCount == 0
+            ? 0
+            : (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        return new PagedReceiptsResponse(
+            receipts.ConvertAll(r => new ReceiptsListItem(r)),
+            page,
+            pageSize,
+            totalCount,
+            totalPages);
     }
 
     public async Task<ReceiptDetails?> GetDetailsAsync(int id, CancellationToken cancellationToken)
