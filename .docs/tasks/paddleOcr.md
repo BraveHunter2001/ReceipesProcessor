@@ -1,5 +1,12 @@
 # Реализация paddleOcr
 
+**ID:** `TASK-001`<br>
+**Status:** `done`<br>
+**Owner:** разработчик<br>
+**Created:** 2026-11-07<br>
+**Updated:** 2026-11-07<br>
+**Source analysis:** [`AN-001`](../analitycs/paddleOcr.md)
+
 ## 2026-11-07
 
 - Создана ветка `feature/paddleocr-service` от `master`.
