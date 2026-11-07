@@ -1,10 +1,19 @@
 ﻿using System.Text;
 using System.Text.Json;
+using Application.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Application.Service;
 
 public class ReceiptTextService
 {
+    private readonly OllamaSettings ollamaSettings;
+
+    public ReceiptTextService(IOptions<OllamaSettings> ollamaOptions)
+    {
+        ollamaSettings = ollamaOptions.Value;
+    }
+
     const string JsonPromt = $@"Ты — умный парсер чеков. Твоя задача — проанализировать сырой текст распознанного чека и извлечь из него структуру. Текст чека может быть некрасивым или спутанным.
 Ты должен вернуть ТОЛЬКО чистый JSON объект, без разметки ```json, без вступлений и объяснений.
 
@@ -38,7 +47,10 @@ public class ReceiptTextService
         };
 
         var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-        HttpResponseMessage response = await httpClient.PostAsync("http://localhost:11434/api/generate", content);
+        string baseUrl = string.IsNullOrWhiteSpace(ollamaSettings.BaseUrl)
+            ? OllamaSettings.DefaultBaseUrl
+            : ollamaSettings.BaseUrl.TrimEnd('/');
+        HttpResponseMessage response = await httpClient.PostAsync($"{baseUrl}/api/generate", content);
         response.EnsureSuccessStatusCode();
 
         string responseString = await response.Content.ReadAsStringAsync();

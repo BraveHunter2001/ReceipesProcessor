@@ -26,7 +26,7 @@ try
     string absoluteTessdataPath = Path.Combine(AppContext.BaseDirectory, tessdataFolderName);
 
     builder.Services.AddInfrastructure(dbConnection);
-    builder.Services.AddApplication(absoluteTessdataPath);
+    builder.Services.AddApplication(absoluteTessdataPath, builder.Configuration);
     builder.Services.AddSerilog((services, loggerConfiguration) => loggerConfiguration
         .ReadFrom.Configuration(builder.Configuration)
         .ReadFrom.Services(services));

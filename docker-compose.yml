@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres-db:
     image: postgres:16-alpine
-    container_name: telegram_bot_postgres
+    container_name: receipesprocessor_postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -16,7 +16,7 @@ services:
 
   s3-storage:
     image: minio/minio:latest
-    container_name: telegram_bot_s3
+    container_name: receipesprocessor_s3
     restart: always
     ports:
       - "9000:9000" # Порт для подключения из C# кода
@@ -28,8 +28,43 @@ services:
       - s3data:/data
     command: server /data --console-address ":9001"
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: receipesprocessor_ollama
+    restart: unless-stopped
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        ollama serve &
+        pid=$$!;
+        until ollama list >/dev/null 2>&1; do sleep 1; done;
+        ollama pull qwen2.5:3b;
+        wait $$pid
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list | grep -q 'qwen2.5:3b'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
 volumes:
   pgdata:
     driver: local
   s3data:
+    driver: local
+  ollama_data:
     driver: local
