@@ -4,9 +4,24 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 import time
 from contextlib import asynccontextmanager
 from typing import Any
+
+# PaddlePaddle 2.6 GPU wheels require CUDA 11/cuDNN 8 DLLs on Windows.
+# Load pip-provided DLL directories before importing Paddle.
+if sys.platform == "win32":
+    _site_packages = os.path.abspath(os.path.join(os.path.dirname(sys.executable), "..", "Lib", "site-packages"))
+    _dll_directories = [
+        os.path.join(_site_packages, "nvidia", "cudnn", "bin"),
+        os.path.join(_site_packages, "nvidia", "cublas", "bin"),
+        os.path.join(_site_packages, "nvidia", "cuda_nvrtc", "bin"),
+    ]
+    for _dll_directory in _dll_directories:
+        if os.path.isdir(_dll_directory):
+            os.add_dll_directory(_dll_directory)
+            os.environ["PATH"] = _dll_directory + os.pathsep + os.environ.get("PATH", "")
 
 import numpy as np
 import paddle

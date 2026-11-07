@@ -21,3 +21,17 @@
 - Проверено: `paddle==2.6.2`, CUDA-сборка — `True`, GPU — `1` (`NVIDIA GeForce GTX 1660 Ti`).
 - Проверено: `paddleocr==2.10.0`, `fastapi==0.115.6`.
 - `pip check` завершился без конфликтов зависимостей.
+
+## Проверка на изображении из `.docs/attachments`
+
+- Изображение `photo_2026-11-07_11-14-51.jpg` корректно читается: JPEG, `696x1280`, RGB.
+- Модели PaddleOCR успешно скачались и были созданы с `use_gpu=True`; Paddle выбрал GPU 0.
+- Реальный inference остановился с ошибкой `cudnn64_8.dll ... error code is 126`.
+- На машине найден CUDA Toolkit 11.8, но cuDNN DLL отсутствуют в `CUDA\\v11.8\\bin` и в окружении Paddle.
+- Для завершения проверки необходимо установить совместимый cuDNN 8.x для CUDA 11.8 и добавить его `bin` в `PATH`.
+
+## Установка cuDNN и реальный inference
+
+- Установлены `nvidia-cudnn-cu11==8.9.4.25`, `nvidia-cublas-cu11==11.11.3.6` и `nvidia-cuda-nvrtc-cu11==11.8.89` в `paddleOcr/venv`.
+- DLL-пути подключены в `main.py` автоматически перед импортом PaddlePaddle.
+- Реальная проверка на `photo_2026-11-07_11-14-51.jpg` успешно выполнена на GPU: PaddleOCR вернул текстовые блоки, confidence и координаты.

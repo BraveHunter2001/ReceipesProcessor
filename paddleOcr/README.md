@@ -5,7 +5,7 @@
 
 ## Установка (Windows, Python 3.10)
 
-1. Установите NVIDIA-драйвер, совместимый с CUDA 12.0, и проверьте `nvidia-smi`.
+1. Установите NVIDIA-драйвер и проверьте `nvidia-smi`. Для зафиксированного PaddlePaddle используется CUDA 11/cuDNN 8.
 2. Создайте окружение и установите зависимости:
 
 ```powershell
@@ -15,7 +15,8 @@ py -3.10 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-Зафиксированная матрица: `paddlepaddle-gpu==2.6.2`, `paddleocr==2.10.0`, Python 3.10.
+Зафиксированная матрица: `paddlepaddle-gpu==2.6.2`, `paddleocr==2.10.0`, `nvidia-cudnn-cu11==8.9.4.25`, Python 3.10.
+Пакеты NVIDIA устанавливают нужные DLL в виртуальное окружение; `main.py` подключает их автоматически.
 Для другой версии CUDA необходимо подобрать соответствующий официальный wheel PaddlePaddle GPU,
 а не добавлять CPU-пакет `paddlepaddle`.
 
