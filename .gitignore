@@ -285,6 +285,61 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 
+# Python projects (including paddleOcr)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python packaging and build artifacts
+*.egg
+*.egg-info/
+dist/
+build/
+develop-eggs/
+eggs/
+parts/
+sdist/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+.eggs/
+
+# Python tooling caches and test output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+pytestdebug.log
+
+# Local Python configuration and secrets
+.python-version
+.env
+.env.*
+!.env.example
+
+# Jupyter/IPython local files
+.ipynb_checkpoints/
+
+# Local OCR/model caches (downloaded weights must not be committed)
+.paddleocr/
+paddleOcr/.paddleocr/
+paddleOcr/models/
+paddleOcr/model_cache/
+
 # Visual Studio 6 build log
 *.plg
 

@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+python-multipart
+--find-links https://paddlepaddle.org.cn
+paddlepaddle-gpu
+paddleocr

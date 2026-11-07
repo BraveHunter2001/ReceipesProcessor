@@ -12,7 +12,7 @@ public static class DI
             opt.UseNpgsql(connectionString);
         });
         services.AddSingleton<S3StorageProvider>();
-
+   
         return services;
     }
 }

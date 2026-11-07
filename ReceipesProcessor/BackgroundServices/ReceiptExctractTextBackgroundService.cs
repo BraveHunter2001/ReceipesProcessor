@@ -49,7 +49,7 @@ internal class ReceiptExctractTextBackgroundService(
             using MemoryStream ms = new();
             await image.FileStream.CopyToAsync(ms);
 
-            string text = exctractor.Exctract(ms);
+            string text = await exctractor.Exctract(ms);
             receipt.RawText = text;
             receipt.Status = ReceiptStatus.TextExctracted;
             ReceiptHistory history = new ReceiptHistory() { Receipt = receipt, Status = ReceiptStatus.TextExctracted, AtRecord = DateTime.UtcNow };

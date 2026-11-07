@@ -31,6 +31,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Responses\" />
+  </ItemGroup>
+
 	<PropertyGroup>
 		<!-- Указываем бэкенду, где искать скомпилированный фронтенд (Vite по умолчанию собирает в dist) -->
 		<SpaRoot>ClientApp\</SpaRoot>

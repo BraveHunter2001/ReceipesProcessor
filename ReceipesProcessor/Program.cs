@@ -1,10 +1,9 @@
 ﻿using Application.DI;
-using Infrastructure;
+using Application.Service;
 using Infrastructure.DI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ReceipesProcessor.BackgroundServices;
-using ReceipesProcessor.Response;
 using Serilog;
 using Telegram.Bot;
 
@@ -33,7 +32,6 @@ try
         .ReadFrom.Services(services));
     builder.Services.AddSingleton<ITelegramBotClient>(provider => new TelegramBotClient(token));
 
-
     builder.Services.AddHostedService<TelegramBotBackgroundService>();
     builder.Services.AddHostedService<ReceiptExctractTextBackgroundService>();
     builder.Services.AddHostedService<ReceiptProccedBackgroundService>();
@@ -43,10 +41,9 @@ try
 
     app.UseStaticFiles();
     app.MapFallbackToFile("index.html");
-    app.MapGet("/api/receipts", async ([FromServices] ApplicationContext context) =>
+    app.MapGet("/api/receipts", async ([FromServices] ReceiptService service) =>
     {
-        var receipts = await context.Receipts.Include(r=>r.Items).OrderByDescending(r => r.Id).ToListAsync();
-        var reseponse = receipts.ConvertAll(r => new ReceiptsListItem(r));
+        var reseponse = await service.GetList();
         return Results.Ok(reseponse);
     });
 

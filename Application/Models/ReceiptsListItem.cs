@@ -1,4 +1,4 @@
-﻿namespace ReceipesProcessor.Response;
+﻿namespace Application.Models;
 
 public class ReceiptsListItem
 {
