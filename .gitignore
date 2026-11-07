@@ -290,6 +290,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Local documentation attachments
+.docs/attachments/
+
 # Virtual environments
 .venv/
 venv/
