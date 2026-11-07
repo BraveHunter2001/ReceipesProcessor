@@ -49,6 +49,28 @@ try
         var reseponse = await service.GetList();
         return Results.Ok(reseponse);
     });
+    app.MapGet("/api/receipts/{id:int}", async (
+        int id,
+        [FromServices] ReceiptService service,
+        CancellationToken cancellationToken) =>
+    {
+        var receipt = await service.GetDetailsAsync(id, cancellationToken);
+        return receipt is null ? Results.NotFound() : Results.Ok(receipt);
+    });
+    app.MapGet("/api/receipts/{id:int}/image", async (
+        int id,
+        [FromServices] ReceiptService service) =>
+    {
+        try
+        {
+            var image = await service.GetImageAsync(id);
+            return Results.Stream(image.FileStream, image.ContentType);
+        }
+        catch (FileNotFoundException)
+        {
+            return Results.NotFound();
+        }
+    });
     app.MapPost("/api/receipts/upload", async (
         IFormFile file,
         [FromServices] ReceiptService service,

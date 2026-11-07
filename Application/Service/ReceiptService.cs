@@ -46,4 +46,38 @@ public class ReceiptService(ApplicationContext context, S3StorageProvider storag
         var receipts = await context.Receipts.Include(r => r.Items).OrderByDescending(r => r.Id).ToListAsync();
         return receipts.ConvertAll(r => new ReceiptsListItem(r));
     }
+
+    public async Task<ReceiptDetails?> GetDetailsAsync(int id, CancellationToken cancellationToken)
+    {
+        var receipt = await context.Receipts
+            .Include(item => item.Items)
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (receipt is null)
+        {
+            return null;
+        }
+
+        var history = await context.ReceiptHistories
+            .Where(item => item.ReceiptId == id)
+            .OrderByDescending(item => item.AtRecord)
+            .ToListAsync(cancellationToken);
+
+        return new ReceiptDetails(receipt, history);
+    }
+
+    public async Task<(Stream FileStream, string ContentType)> GetImageAsync(int id)
+    {
+        var imageId = await context.Receipts
+            .Where(item => item.Id == id)
+            .Select(item => item.ImageId)
+            .SingleOrDefaultAsync();
+
+        if (string.IsNullOrWhiteSpace(imageId))
+        {
+            throw new FileNotFoundException($"Изображение для чека #{id} не найдено.");
+        }
+
+        return await storageProvider.GetFileAsync(imageId);
+    }
 }
